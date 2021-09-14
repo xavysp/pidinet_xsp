@@ -1,5 +1,5 @@
 # Pixel Difference Convolution
-
+ *A slight modification from* zhuoinoulu/pidinet
 This repository contains the PyTorch implementation for 
 "Pixel Difference Networks for Efficient Edge Detection" 
 by 
