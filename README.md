@@ -1,5 +1,5 @@
 # Pixel Difference Convolution
- *A slight modification from* zhuoinoulu/pidinet
+ *A slight modification from* [zhuoinoulu/pidinet](https://github.com/zhuoinoulu/pidinet)
  
  
 This repository contains the PyTorch implementation for 
