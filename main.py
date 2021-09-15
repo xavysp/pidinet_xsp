@@ -14,11 +14,11 @@ from __future__ import division
 
 import argparse
 import os
-import time
+import time,platform
 import models
 from models.convert_pidinet import convert_pidinet
 from utils import *
-from edge_dataloader import BSDS_VOCLoader, BSDS_Loader, Multicue_Loader, NYUD_Loader, Custom_Loader
+from edge_dataloader import BSDS_VOCLoader, BSDS_Loader, Multicue_Loader, NYUD_Loader, Custom_Loader, BipedDataset, TestDataset
 from torch.utils.data import DataLoader
 
 import torch
@@ -27,21 +27,23 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 
+IS_LINUX = True if platform.system()=="Linux" else False
+dataset_base_dir = '/opt/dataset'if IS_LINUX else 'C:/Users/xavysp/dataset'
 parser = argparse.ArgumentParser(description='PyTorch Pixel Difference Convolutional Networks')
 
-parser.add_argument('--savedir', type=str, default='results/savedir', 
+parser.add_argument('--savedir', type=str, default='results',
         help='path to save result and checkpoint')
-parser.add_argument('--datadir', type=str, default='../data', 
+parser.add_argument('--datadir', type=str, default=dataset_base_dir,
         help='dir to the dataset')
 parser.add_argument('--only-bsds', action='store_true', 
         help='only use bsds for training')
 parser.add_argument('--ablation', action='store_true', 
         help='not use bsds val set for training')
-parser.add_argument('--dataset', type=str, default='BSDS',
+parser.add_argument('--dataset', type=str, default='BIPED',
         help='data settings for BSDS, Multicue and NYUD datasets')
 
-parser.add_argument('--model', type=str, default='baseline', 
-        help='model to train the dataset')
+parser.add_argument('--model', type=str, default='pidinet',
+        help='model to train the dataset') # check later
 parser.add_argument('--sa', action='store_true', 
         help='use CSAM in pidinet')
 parser.add_argument('--dil', action='store_true', 
@@ -63,7 +65,7 @@ parser.add_argument('--lr', type=float, default=0.005,
         help='initial learning rate for all weights')
 parser.add_argument('--lr-type', type=str, default='multistep', 
         help='learning rate strategy [cosine, multistep]')
-parser.add_argument('--lr-steps', type=str, default=None, 
+parser.add_argument('--lr-steps', type=str, default=[10,16],
         help='steps for multistep learning rate')
 parser.add_argument('--opt', type=str, default='adam', 
         help='optimizer')
@@ -76,7 +78,7 @@ parser.add_argument('--eta', type=float, default=0.3,
 parser.add_argument('--lmbda', type=float, default=1.1, 
         help='weight on negative pixels (the beta parameter in the paper)')
 
-parser.add_argument('--resume', action='store_true', 
+parser.add_argument('--resume', action='store_false',
         help='use latest checkpoint if have any')
 parser.add_argument('--print-freq', type=int, default=10, 
         help='print frequency')
@@ -107,7 +109,7 @@ def main(running_file):
         args.lr_steps = list(map(int, args.lr_steps.split('-'))) 
 
     dataset_setting_choices = ['BSDS', 'NYUD-image', 'NYUD-hha', 'Multicue-boundary-1', 
-                'Multicue-boundary-2', 'Multicue-boundary-3', 'Multicue-edge-1', 'Multicue-edge-2', 'Multicue-edge-3', 'Custom']
+                'Multicue-boundary-2', 'Multicue-boundary-3', 'Multicue-edge-1', 'Multicue-edge-2', 'Multicue-edge-3','BIPED', 'Custom']
     if not isinstance(args.dataset, list): 
         assert args.dataset in dataset_setting_choices, 'unrecognized data setting %s, please choose from %s' % (str(args.dataset), str(dataset_setting_choices))
         args.dataset = list(args.dataset.strip().split('-')) 
@@ -177,9 +179,15 @@ def main(running_file):
     elif 'NYUD' == args.dataset[0]:
         train_dataset = NYUD_Loader(root=args.datadir, split="train", setting=args.dataset[1:])
         test_dataset = NYUD_Loader(root=args.datadir, split="test", setting=args.dataset[1:])
+    elif 'BIPED' == args.dataset[0]:
+        train_dataset = BipedDataset(args.datadir, img_width=352, img_height=352,
+                                     mean_bgr=[103.939,116.779,123.68], train_mode='train', arg=args)
+        test_dataset = TestDataset(args.datadir, test_data='BIPED',img_width=1280, img_height=720,
+                                   mean_bgr=[103.939,116.779,123.68],test_list='test_rgb.lst', arg=args)
     elif 'Custom' == args.dataset[0]:
         train_dataset = Custom_Loader(root=args.datadir)
         test_dataset = Custom_Loader(root=args.datadir)
+
     else:
         raise ValueError("unrecognized dataset setting")
 
@@ -238,6 +246,9 @@ def main(running_file):
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
             }, epoch, args.savedir, saveID, keep_freq=args.save_freq)
+
+        # test on each epoch
+        test(test_loader, model, epoch+1, running_file, args)
 
     return
 
