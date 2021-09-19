@@ -52,7 +52,7 @@ parser.add_argument('--config', type=str, default='carv4',
         help='model configurations, please refer to models/config.py for possible configurations')
 parser.add_argument('--seed', type=int, default=None, 
         help='random seed (default: None)')
-parser.add_argument('--gpu', type=str, default='', 
+parser.add_argument('--gpu', type=str, default='0',
         help='gpus available')
 parser.add_argument('--checkinfo', action='store_true', 
         help='only check the informations about the model: model size, flops')
