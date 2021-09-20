@@ -327,7 +327,7 @@ class BipedDataset(data.Dataset):
         self.crop_img = crop_img
         self.arg = arg
         self.train_data = train_data
-        self.train_list = 'train_rgb.lst'
+        self.train_list = 'train_pair.txt'
 
         self.data_index = self._build_index()
 
