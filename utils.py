@@ -15,7 +15,7 @@ import shutil
 import math
 import time
 import random
-import skimage
+from PIL import Image
 import numpy as np
 from skimage import io
 from skimage.transform import resize
@@ -41,7 +41,7 @@ def get_model_parm_nums(model):
 #         basic functions            #
 ######################################
 
-def load_checkpoint(args, running_file):
+def load_checkpoint(args, running_file=None):
 
     model_dir = os.path.join(args.savedir, 'save_models')
     latest_filename = os.path.join(model_dir, 'latest.txt')

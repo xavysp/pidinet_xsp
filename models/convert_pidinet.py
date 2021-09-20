@@ -71,3 +71,11 @@ def convert_pidinet(state_dict, config):
 
     return new_dict
 
+def convert_pidinet_test(state_dict, config):
+    pdcs = config_model_converted(config)
+    new_dict = {}
+    for pname, p in state_dict.items():
+        new_dict[pname[7:]] = p
+
+    return new_dict
+

@@ -35,58 +35,58 @@ parser.add_argument('--savedir', type=str, default='results',
         help='path to save result and checkpoint')
 parser.add_argument('--datadir', type=str, default=dataset_base_dir,
         help='dir to the dataset')
-parser.add_argument('--only-bsds', action='store_true', 
+parser.add_argument('--only-bsds', action='store_true',
         help='only use bsds for training')
-parser.add_argument('--ablation', action='store_true', 
+parser.add_argument('--ablation', action='store_true',
         help='not use bsds val set for training')
 parser.add_argument('--dataset', type=str, default='BIPED',
         help='data settings for BSDS, Multicue and NYUD datasets')
 
 parser.add_argument('--model', type=str, default='pidinet',
         help='model to train the dataset') # check later
-parser.add_argument('--sa', action='store_true', 
+parser.add_argument('--sa', action='store_true',
         help='use CSAM in pidinet')
-parser.add_argument('--dil', action='store_true', 
+parser.add_argument('--dil', action='store_true',
         help='use CDCM in pidinet')
-parser.add_argument('--config', type=str, default='carv4', 
+parser.add_argument('--config', type=str, default='carv4',
         help='model configurations, please refer to models/config.py for possible configurations')
-parser.add_argument('--seed', type=int, default=None, 
+parser.add_argument('--seed', type=int, default=None,
         help='random seed (default: None)')
-parser.add_argument('--gpu', type=str, default='', 
+parser.add_argument('--gpu', type=str, default='0',
         help='gpus available')
-parser.add_argument('--checkinfo', action='store_true', 
+parser.add_argument('--checkinfo', action='store_true',
         help='only check the informations about the model: model size, flops')
 
-parser.add_argument('--epochs', type=int, default=20, 
+parser.add_argument('--epochs', type=int, default=20,
         help='number of total epochs to run')
-parser.add_argument('--iter-size', type=int, default=24, 
+parser.add_argument('--iter-size', type=int, default=24,
         help='number of samples in each iteration')
-parser.add_argument('--lr', type=float, default=0.005, 
+parser.add_argument('--lr', type=float, default=0.005,
         help='initial learning rate for all weights')
-parser.add_argument('--lr-type', type=str, default='multistep', 
+parser.add_argument('--lr-type', type=str, default='multistep',
         help='learning rate strategy [cosine, multistep]')
 parser.add_argument('--lr-steps', type=str, default=[10,16],
         help='steps for multistep learning rate')
-parser.add_argument('--opt', type=str, default='adam', 
+parser.add_argument('--opt', type=str, default='adam',
         help='optimizer')
-parser.add_argument('--wd', type=float, default=1e-4, 
+parser.add_argument('--wd', type=float, default=1e-4,
         help='weight decay for all weights')
-parser.add_argument('-j', '--workers', type=int, default=4, 
+parser.add_argument('-j', '--workers', type=int, default=4,
         help='number of data loading workers')
-parser.add_argument('--eta', type=float, default=0.3, 
+parser.add_argument('--eta', type=float, default=0.3,
         help='threshold to determine the ground truth (the eta parameter in the paper)')
-parser.add_argument('--lmbda', type=float, default=1.1, 
+parser.add_argument('--lmbda', type=float, default=1.1,
         help='weight on negative pixels (the beta parameter in the paper)')
 
 parser.add_argument('--resume', action='store_false',
         help='use latest checkpoint if have any')
-parser.add_argument('--print-freq', type=int, default=10, 
+parser.add_argument('--print-freq', type=int, default=10,
         help='print frequency')
-parser.add_argument('--save-freq', type=int, default=1, 
+parser.add_argument('--save-freq', type=int, default=1,
         help='save frequency')
-parser.add_argument('--evaluate', type=str, default=None, 
+parser.add_argument('--evaluate', type=str, default=None,
         help='full path to checkpoint to be evaluated')
-parser.add_argument('--evaluate-converted', action='store_true', 
+parser.add_argument('--evaluate-converted', action='store_true',
         help='convert the checkpoint to vanilla cnn, then evaluate')
 
 args = parser.parse_args()
@@ -105,14 +105,14 @@ def main(running_file):
     torch.cuda.manual_seed_all(args.seed)
     args.use_cuda = torch.cuda.is_available()
 
-    if args.lr_steps is not None and not isinstance(args.lr_steps, list): 
-        args.lr_steps = list(map(int, args.lr_steps.split('-'))) 
+    if args.lr_steps is not None and not isinstance(args.lr_steps, list):
+        args.lr_steps = list(map(int, args.lr_steps.split('-')))
 
-    dataset_setting_choices = ['BSDS', 'NYUD-image', 'NYUD-hha', 'Multicue-boundary-1', 
+    dataset_setting_choices = ['BSDS', 'NYUD-image', 'NYUD-hha', 'Multicue-boundary-1',
                 'Multicue-boundary-2', 'Multicue-boundary-3', 'Multicue-edge-1', 'Multicue-edge-2', 'Multicue-edge-3','BIPED', 'Custom']
-    if not isinstance(args.dataset, list): 
+    if not isinstance(args.dataset, list):
         assert args.dataset in dataset_setting_choices, 'unrecognized data setting %s, please choose from %s' % (str(args.dataset), str(dataset_setting_choices))
-        args.dataset = list(args.dataset.strip().split('-')) 
+        args.dataset = list(args.dataset.strip().split('-'))
 
 
     print(args)
@@ -136,7 +136,7 @@ def main(running_file):
             'params': bn_weights,
             'weight_decay': 0.1 * args.wd,
             'lr': args.lr}, {
-            'params': relu_weights, 
+            'params': relu_weights,
             'weight_decay': 0.0,
             'lr': args.lr
     }]
@@ -314,8 +314,8 @@ def train(train_loader, model, optimizer, epoch, running_file, args, running_lr)
                           'Data {data_time.val:.3f}\t' + \
                           'Loss {loss.val:.4f} (avg:{loss.avg:.4f})\t' + \
                           'lr {lr}\t').format(
-                              epoch, args.epochs, iter_step, len(train_loader)//args.iter_size, 
-                              batch_time=batch_time, data_time=data_time, 
+                              epoch, args.epochs, iter_step, len(train_loader)//args.iter_size,
+                              batch_time=batch_time, data_time=data_time,
                               loss=losses, lr=running_lr))
                 print(runinfo)
                 running_file.write('%s\n' % runinfo)
@@ -361,7 +361,7 @@ def test(test_loader, model, epoch, running_file, args):
         for i in range(len(results)):
           results_all[i, 0, :, :] = results[i]
 
-        torchvision.utils.save_image(1-results_all, 
+        torchvision.utils.save_image(1-results_all,
                 os.path.join(img_dir, "%s.jpg" % img_name))
         sio.savemat(os.path.join(mat_dir, '%s.mat' % img_name), {'img': result})
         result = Image.fromarray((result * 255).astype(np.uint8))
