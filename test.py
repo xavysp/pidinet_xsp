@@ -58,7 +58,7 @@ parser.add_argument('-j', '--workers', type=int, default=4,
         help='number of data loading workers')
 parser.add_argument('--eta', type=float, default=0.3, 
         help='threshold to determine the ground truth')
-parser.add_argument('--checkpoint', type=str, default='checkpoint_015.pth.tar',
+parser.add_argument('--checkpoint', type=str, default='checkpoint_019.pth.tar',
         help='checkpoint name')
 parser.add_argument('--evaluate-converted', type=bool, default=True,
         help='convert the checkpoint to vanilla cnn, then evaluate')
@@ -94,7 +94,7 @@ def main():
     model = getattr(models, args.model)(args)
 
     ## Load checkpoint
-    checkpoint_dir = os.path.join('results','eval_results',args.checkpoint)
+    checkpoint_dir = os.path.join('results','save_models',args.checkpoint)
     checkpoint = torch.load(checkpoint_dir,
                                      map_location=device)
     if args.evaluate_converted:
