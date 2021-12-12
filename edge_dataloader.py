@@ -1,7 +1,7 @@
 from torch.utils import data
 from torch import from_numpy
 import torchvision.transforms as transforms
-import os
+import os, platform
 from pathlib import Path
 from PIL import Image
 import numpy as np
@@ -18,10 +18,12 @@ def fold_files(foldname):
     else:
         return allfiles
 
+
 class BSDS_Loader(data.Dataset):
     """
-    Dataloader BSDS500
+    for BRIND
     """
+
     def __init__(self, root='data/HED-BSDS', split='train', transform=False, threshold=0.3, ablation=False):
         self.root = root
         self.split = split
@@ -49,7 +51,7 @@ class BSDS_Loader(data.Dataset):
 
     def __len__(self):
         return len(self.filelist)
-    
+
     def __getitem__(self, index):
         if self.split == "train":
             img_file, lb_file = self.filelist[index].split()
@@ -62,9 +64,9 @@ class BSDS_Loader(data.Dataset):
             threshold = self.threshold
             lb = lb[np.newaxis, :, :]
             lb[lb == 0] = 0
-            lb[np.logical_and(lb>0, lb<threshold)] = 2
+            lb[np.logical_and(lb > 0, lb < threshold)] = 2
             lb[lb >= threshold] = 1
-            
+
         else:
             img_file = self.filelist[index].rstrip()
 
@@ -84,7 +86,8 @@ class BSDS_VOCLoader(data.Dataset):
     """
     Dataloader BSDS500
     """
-    def __init__(self, root='data/HED-BSDS_PASCAL', split='train', transform=False, threshold=0.3, ablation=False):
+
+    def __init__(self, root='data/HED-BSDS_PASCAL', split='train', transform=False, threshold=0.3, ablation=False, arg=None):
         self.root = root
         self.split = split
         self.threshold = threshold * 256
@@ -95,23 +98,34 @@ class BSDS_VOCLoader(data.Dataset):
             transforms.ToTensor(),
             normalize])
         if self.split == 'train':
+            print('error here train')
             if ablation:
                 self.filelist = os.path.join(self.root, 'bsds_pascal_train200_pair.lst')
             else:
                 self.filelist = os.path.join(self.root, 'bsds_pascal_train_pair.lst')
         elif self.split == 'test':
+            self.root = os.path.join(self.root,arg.test_data[0])
             if ablation:
+                print('error here train')
                 self.filelist = os.path.join(self.root, 'val.lst')
             else:
-                self.filelist = os.path.join(self.root, 'test.lst')
+                filelist = os.path.join(self.root, arg.test_list)
         else:
             raise ValueError("Invalid split type!")
-        with open(self.filelist, 'r') as f:
-            self.filelist = f.readlines()
+
+        self.filelist =[]
+        with open(filelist, 'r') as f:
+            files = f.readlines()
+        files = [line.strip() for line in files]
+        pairs = [line.split() for line in files]
+        for pair in pairs:
+            tmp_img = pair[0]
+            self.filelist.append(
+                (os.path.join(self.root, tmp_img)))
 
     def __len__(self):
         return len(self.filelist)
-    
+
     def __getitem__(self, index):
         if self.split == "train":
             img_file, lb_file = self.filelist[index].split()
@@ -124,9 +138,9 @@ class BSDS_VOCLoader(data.Dataset):
             threshold = self.threshold
             lb = lb[np.newaxis, :, :]
             lb[lb == 0] = 0
-            lb[np.logical_and(lb>0, lb<threshold)] = 2
+            lb[np.logical_and(lb > 0, lb < threshold)] = 2
             lb[lb >= threshold] = 1
-            
+
         else:
             img_file = self.filelist[index].rstrip()
 
@@ -142,10 +156,11 @@ class BSDS_VOCLoader(data.Dataset):
             return img, img_name
 
 
-class Multicue_Loader(data.Dataset):
+class MDBD_Loader(data.Dataset):
     """
     Dataloader for Multicue
     """
+
     def __init__(self, root='data/', split='train', transform=False, threshold=0.3, setting=['boundary', '1']):
         """
         setting[0] should be 'boundary' or 'edge'
@@ -162,10 +177,10 @@ class Multicue_Loader(data.Dataset):
             normalize])
         if self.split == 'train':
             self.filelist = os.path.join(
-                    self.root, 'train_pair_%s_set_%s.lst' % (setting[0], setting[1]))
+                self.root, 'train_pair_%s_set_%s.lst' % (setting[0], setting[1]))
         elif self.split == 'test':
             self.filelist = os.path.join(
-                    self.root, 'test_%s_set_%s.lst' % (setting[0], setting[1]))
+                self.root, 'test_%s_set_%s.lst' % (setting[0], setting[1]))
         else:
             raise ValueError("Invalid split type!")
         with open(self.filelist, 'r') as f:
@@ -173,7 +188,7 @@ class Multicue_Loader(data.Dataset):
 
     def __len__(self):
         return len(self.filelist)
-    
+
     def __getitem__(self, index):
         if self.split == "train":
             img_file, lb_file = self.filelist[index].split()
@@ -186,9 +201,9 @@ class Multicue_Loader(data.Dataset):
             threshold = self.threshold
             lb = lb[np.newaxis, :, :]
             lb[lb == 0] = 0
-            lb[np.logical_and(lb>0, lb<threshold)] = 2
+            lb[np.logical_and(lb > 0, lb < threshold)] = 2
             lb[lb >= threshold] = 1
-            
+
         else:
             img_file = self.filelist[index].rstrip()
 
@@ -203,10 +218,12 @@ class Multicue_Loader(data.Dataset):
             img_name = Path(img_file).stem
             return img, img_name
 
+
 class NYUD_Loader(data.Dataset):
     """
     Dataloader for NYUDv2
     """
+
     def __init__(self, root='data/', split='train', transform=False, threshold=0.4, setting=['image']):
         """
         There is no threshold for NYUDv2 since it is singlely annotated
@@ -223,10 +240,10 @@ class NYUD_Loader(data.Dataset):
             normalize])
         if self.split == 'train':
             self.filelist = os.path.join(
-                    self.root, '%s-train_da.lst' % (setting[0]))
+                self.root, '%s-train_da.lst' % (setting[0]))
         elif self.split == 'test':
             self.filelist = os.path.join(
-                    self.root, '%s-test.lst' % (setting[0]))
+                self.root, '%s-test.lst' % (setting[0]))
         else:
             raise ValueError("Invalid split type!")
         with open(self.filelist, 'r') as f:
@@ -234,7 +251,7 @@ class NYUD_Loader(data.Dataset):
 
     def __len__(self):
         return len(self.filelist)
-    
+
     def __getitem__(self, index):
         scale = 1.0
         if self.split == "train":
@@ -243,7 +260,7 @@ class NYUD_Loader(data.Dataset):
             lb_file = lb_file.strip()
             scale = float(scale.strip())
             pil_image = Image.open(os.path.join(self.root, lb_file))
-            if scale < 0.99: # which means it < 1.0
+            if scale < 0.99:  # which means it < 1.0
                 W = int(scale * pil_image.width)
                 H = int(scale * pil_image.height)
                 pil_image = pil_image.resize((W, H))
@@ -254,9 +271,9 @@ class NYUD_Loader(data.Dataset):
             threshold = self.threshold
             lb = lb[np.newaxis, :, :]
             lb[lb == 0] = 0
-            lb[np.logical_and(lb>0, lb<threshold)] = 2
+            lb[np.logical_and(lb > 0, lb < threshold)] = 2
             lb[lb >= threshold] = 1
-            
+
         else:
             img_file = self.filelist[index].rstrip()
 
@@ -273,10 +290,12 @@ class NYUD_Loader(data.Dataset):
             img_name = Path(img_file).stem
             return img, img_name
 
+
 class Custom_Loader(data.Dataset):
     """
     Custom Dataloader
     """
+
     def __init__(self, root='data/'):
         self.root = root
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -288,9 +307,8 @@ class Custom_Loader(data.Dataset):
 
     def __len__(self):
         return len(self.imgList)
-    
-    def __getitem__(self, index):
 
+    def __getitem__(self, index):
         with open(os.path.join(self.root, self.imgList[index]), 'rb') as f:
             img = Image.open(f)
             img = img.convert('RGB')
@@ -299,6 +317,7 @@ class Custom_Loader(data.Dataset):
         filename = Path(self.imgList[index]).stem
 
         return img, filename
+
 
 class BipedDataset(data.Dataset):
     train_modes = ['train', 'test', ]
@@ -315,7 +334,7 @@ class BipedDataset(data.Dataset):
                  #  is_scaling=None,
                  # Whether to crop image or otherwise resize image to match image height and width.
                  crop_img=False,
-                 train_data='BIPED',arg=None
+                 train_data='BIPED', arg=None
                  ):
         self.data_root = data_root
         self.train_mode = train_mode
@@ -338,8 +357,8 @@ class BipedDataset(data.Dataset):
 
         data_root = os.path.abspath(self.data_root)
         sample_indices = []
-        data_root= os.path.join(data_root, self.train_data,'edges')
-        if self.train_data.lower()=='biped':
+        data_root = os.path.join(data_root, self.train_data, 'edges')
+        if self.train_data.lower() == 'biped':
 
             images_path = os.path.join(data_root,
                                        'imgs',
@@ -362,7 +381,7 @@ class BipedDataset(data.Dataset):
                     )
         else:
             file_path = os.path.join(data_root, self.train_list)
-            if self.arg.train_data.lower()=='bsds':
+            if self.arg.train_data.lower() == 'brind':
 
                 with open(file_path, 'r') as f:
                     files = f.readlines()
@@ -373,8 +392,8 @@ class BipedDataset(data.Dataset):
                     tmp_img = pair[0]
                     tmp_gt = pair[1]
                     sample_indices.append(
-                        (os.path.join(data_root,tmp_img),
-                         os.path.join(data_root,tmp_gt),))
+                        (os.path.join(data_root, tmp_img),
+                         os.path.join(data_root, tmp_gt),))
             else:
                 with open(file_path) as f:
                     files = json.load(f)
@@ -405,11 +424,11 @@ class BipedDataset(data.Dataset):
         if len(gt.shape) == 3:
             gt = gt[:, :, 0]
 
-        gt /= 255. # for DexiNed input and BDCN
+        gt /= 255.  # for DexiNed input and BDCN
 
         img = np.array(img, dtype=np.float32)
         img -= self.mean_bgr
-        i_h, i_w,_ = img.shape
+        i_h, i_w, _ = img.shape
         # data = []
         # if self.scale is not None:
         #     for scl in self.scale:
@@ -417,7 +436,7 @@ class BipedDataset(data.Dataset):
         #         data.append(torch.from_numpy(img_scale.transpose((2, 0, 1))).float())
         #     return data, gt
         #  400 for BIPEd and 352 for BSDS check with 384
-        crop_size = self.img_height if self.img_height == self.img_width else 352# MDBD=480 BPED=352
+        crop_size = self.img_height if self.img_height == self.img_width else 352  # MDBD=480 BPED=352
 
         # # for BSDS
         # if i_w> crop_size and i_h>crop_size:
@@ -427,21 +446,21 @@ class BipedDataset(data.Dataset):
         #     gt = gt[i:i + crop_size , j:j + crop_size ]
 
         # for BIPED
-        if np.random.random() >= 0.5: #l
-            h,w = gt.shape
-            LR_img_size = 256  #l BIPED=256, 240 200 # MDBD= 352
+        if np.random.random() >= 0.5:  # l
+            h, w = gt.shape
+            LR_img_size = 256  # l BIPED=256, 240 200 # MDBD= 352
             i = np.random.randint(0, h - LR_img_size)
             j = np.random.randint(0, w - LR_img_size)
             # if img.
-            img = img[i:i + LR_img_size , j:j + LR_img_size ]
-            gt = gt[i:i + LR_img_size , j:j + LR_img_size ]
-            img = cv.resize(img, dsize=(crop_size, crop_size),)
+            img = img[i:i + LR_img_size, j:j + LR_img_size]
+            gt = gt[i:i + LR_img_size, j:j + LR_img_size]
+            img = cv.resize(img, dsize=(crop_size, crop_size), )
             gt = cv.resize(gt, dsize=(crop_size, crop_size))
         else:
             # New addidings
             img = cv.resize(img, dsize=(crop_size, crop_size))
             gt = cv.resize(gt, dsize=(crop_size, crop_size))
-         # for  BIPED and BSDS
+        # for  BIPED and BSDS
         gt[gt > 0.2] += 0.5
         gt = np.clip(gt, 0., 1.)
         # for MDBD
@@ -461,6 +480,7 @@ class BipedDataset(data.Dataset):
         gt = from_numpy(np.array([gt])).float()
         return img, gt
 
+
 class TestDataset(data.Dataset):
     def __init__(self,
                  data_root,
@@ -473,9 +493,9 @@ class TestDataset(data.Dataset):
                  ):
 
         self.data_root = data_root
-        self.test_data = test_data
-        self.test_list = test_list
-        self.args=arg
+        self.test_data = arg.test_data
+        self.test_list = arg.test_list
+        self.args = arg
         # self.arg = arg
         # self.mean_bgr = arg.mean_pixel_values[0:3] if len(arg.mean_pixel_values) == 4 \
         #     else arg.mean_pixel_values
@@ -500,7 +520,7 @@ class TestDataset(data.Dataset):
                 raise ValueError(
                     f"Test list not provided for dataset: {self.test_data}")
             # just for biped test dataset
-            list_name = os.path.join(self.data_root,'BIPED','edges',self.test_list)
+            list_name = os.path.join(self.data_root, 'BIPED', 'edges', self.test_list)
             with open(list_name, 'r') as f:
                 files = f.readlines()
             files = [line.strip() for line in files]
@@ -523,8 +543,8 @@ class TestDataset(data.Dataset):
 
         # base dir
         if self.test_data.upper() == 'BIPED':
-            img_dir = os.path.join(self.data_root, 'BIPED','edges','imgs', 'test')
-            gt_dir = os.path.join(self.data_root, 'BIPED','edges', 'edge_maps', 'test')
+            img_dir = os.path.join(self.data_root, self.test_data, 'edges', 'imgs', 'test')
+            gt_dir = os.path.join(self.data_root,self.test_data, 'edges', 'edge_maps', 'test')
         elif self.test_data.upper() == 'CLASSIC':
             img_dir = self.data_root
             gt_dir = None
@@ -552,15 +572,15 @@ class TestDataset(data.Dataset):
             img_height = self.img_height
             img_width = self.img_width
             print(
-                f"actual size: {img.shape}, target size: {( img_height,img_width,)}")
+                f"actual size: {img.shape}, target size: {(img_height, img_width,)}")
             # img = cv2.resize(img, (self.img_width, self.img_height))
-            img = cv.resize(img, (img_width,img_height))
+            img = cv.resize(img, (img_width, img_height))
             gt = None
 
         # Make images and labels at least 512 by 512
         elif img.shape[0] < 512 or img.shape[1] < 512:
-            img = cv.resize(img, (self.img_width, self.img_height)) # 512
-            gt = cv.resize(gt, (self.img_width, self.img_height)) # 512
+            img = cv.resize(img, (self.img_width, self.img_height))  # 512
+            gt = cv.resize(gt, (self.img_width, self.img_height))  # 512
 
         # Make sure images and labels are divisible by 2^4=16
         elif img.shape[0] % 16 != 0 or img.shape[1] % 16 != 0:
@@ -569,8 +589,8 @@ class TestDataset(data.Dataset):
             img = cv.resize(img, (img_width, img_height))
             gt = cv.resize(gt, (img_width, img_height))
         else:
-            img_width =self.img_width
-            img_height =self.img_height
+            img_width = self.img_width
+            img_height = self.img_height
             img = cv.resize(img, (img_width, img_height))
             gt = cv.resize(gt, (img_width, img_height))
 

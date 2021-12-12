@@ -26,7 +26,7 @@ from scipy import io as sio
 
 import models
 from utils import *
-from edge_dataloader import BSDS_VOCLoader, BSDS_Loader, Multicue_Loader, NYUD_Loader, TestDataset
+from edge_dataloader import BSDS_VOCLoader, BSDS_Loader, MDBD_Loader, NYUD_Loader, TestDataset
 from models.convert_pidinet import convert_pidinet, convert_pidinet_test
 
 IS_LINUX = True if platform.system()=="Linux" else False
@@ -36,8 +36,15 @@ parser = argparse.ArgumentParser(description='PyTorch Diff Convolutional Network
 
 parser.add_argument('--datadir', type=str, default=dataset_base_dir,
         help='dir to the dataset')
-parser.add_argument('--dataset', type=str, default='BIPED',
+parser.add_argument('--test_data', type=str, default='MDBD',
+        help='test data')
+parser.add_argument('--train_data', type=str, default='BIPED',
         help='data settings for BSDS, Multicue and NYUD datasets')
+parser.add_argument('--train_list', type=str, default='train_pair.lst',
+        help='training data list')
+parser.add_argument('--test_list', type=str, default='test_pair.lst',
+        help='testing data list')
+
 
 parser.add_argument('--model', type=str, default='pidinet',
         help='model to train the dataset')
@@ -58,7 +65,7 @@ parser.add_argument('-j', '--workers', type=int, default=4,
         help='number of data loading workers')
 parser.add_argument('--eta', type=float, default=0.3, 
         help='threshold to determine the ground truth')
-parser.add_argument('--checkpoint', type=str, default='checkpoint_019.pth.tar',
+parser.add_argument('--checkpoint', type=str, default='checkpoint_015.pth.tar',
         help='checkpoint name')
 parser.add_argument('--evaluate-converted', type=bool, default=True,
         help='convert the checkpoint to vanilla cnn, then evaluate')
@@ -81,12 +88,15 @@ def main():
     device = torch.device('cpu' if torch.cuda.device_count() == 0
                           else 'cuda')
 
-    dataset_setting_choices = ['BSDS', 'NYUD-image', 'NYUD-hha', 'Multicue-boundary-1', 
-                'Multicue-boundary-2', 'Multicue-boundary-3', 'Multicue-edge-1',
+    # dataset_setting_choices = ['BSDS', 'NYUD-image', 'NYUD-hha', 'Multicue-boundary-1',
+    #             'Multicue-boundary-2', 'Multicue-boundary-3', 'Multicue-edge-1',
+    #                            'Multicue-edge-2', 'Multicue-edge-3', 'BIPED']
+    dataset_setting_choices = ['BSDS', 'NYUD', 'CID', 'Multicue-boundary-1',
+                'Multicue-boundary-2', 'Multicue-boundary-3', 'MDBD',
                                'Multicue-edge-2', 'Multicue-edge-3', 'BIPED']
-    if not isinstance(args.dataset, list): 
-        assert args.dataset in dataset_setting_choices, 'unrecognized data setting %s, please choose from %s' % (str(args.dataset), str(dataset_setting_choices))
-        args.dataset = list(args.dataset.strip().split('-')) 
+    if not isinstance(args.test_data, list):
+        assert args.test_data in dataset_setting_choices, 'unrecognized data setting %s, please choose from %s' % (str(args.dataset), str(dataset_setting_choices))
+        args.test_data = list(args.test_data.strip().split('-'))
 
     print(args)
 
@@ -94,7 +104,7 @@ def main():
     model = getattr(models, args.model)(args)
 
     ## Load checkpoint
-    checkpoint_dir = os.path.join('results','save_models',args.checkpoint)
+    checkpoint_dir = os.path.join('results','save_models',args.train_data,args.checkpoint)
     checkpoint = torch.load(checkpoint_dir,
                                      map_location=device)
     if args.evaluate_converted:
@@ -109,15 +119,15 @@ def main():
         print('cuda is not used, the running might be slow')
 
     ### Load Data
-    if 'BSDS' == args.dataset[0]:
-        test_dataset = BSDS_VOCLoader(root=args.datadir, split="test", threshold=args.eta)
+    if args.test_data[0] in ['BSDS', 'CID','MDBD']:
+        test_dataset = BSDS_VOCLoader(root=args.datadir, split="test", threshold=args.eta,arg=args)
     elif 'Multicue' == args.dataset[0]:
-        test_dataset = Multicue_Loader(root=args.datadir, split="test", threshold=args.eta, setting=args.dataset[1:])
-    elif 'NYUD' == args.dataset[0]:
+        test_dataset = MDBD_Loader(root=args.datadir, split="test", threshold=args.eta, setting=args.dataset[1:])
+    elif 'NYUD' == args.test_data[0]:
         test_dataset = NYUD_Loader(root=args.datadir, split="test", setting=args.dataset[1:])
     else:
         test_dataset = TestDataset(args.datadir, test_data='BIPED', img_width=1280, img_height=720,
-                                   mean_bgr=[103.939, 116.779, 123.68], test_list='test_rgb.lst', arg=args)
+                                   mean_bgr=[103.939, 116.779, 123.68], arg=args)
 
     test_loader = DataLoader(
         test_dataset, batch_size=1, num_workers=args.workers, shuffle=False)
@@ -130,11 +140,11 @@ def test(test_loader, model, args):
 
     model.eval()
 
-    end = time.time()
-    res_img_dir = os.path.join('results','test',args.model+'_BIPED2'+args.dataset[0],'pred')
-    res_mat_dir = os.path.join('results','test',args.model+'_BIPED2'+args.dataset[0],'mat')
+    res_img_dir = os.path.join('results','test',args.model+args.train_data+'2'+args.test_data[0],'pred')
+    res_mat_dir = os.path.join('results','test',args.model+args.train_data+'2'+args.test_data[0],'mat')
     os.makedirs(res_img_dir, exist_ok=True)
     os.makedirs(res_mat_dir, exist_ok=True)
+    end = time.time()
     for idx, (image, img_name) in enumerate(test_loader):
 
         with torch.no_grad():

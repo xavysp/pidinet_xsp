@@ -18,7 +18,7 @@ import time,platform
 import models
 from models.convert_pidinet import convert_pidinet
 from utils import *
-from edge_dataloader import BSDS_VOCLoader, BSDS_Loader, Multicue_Loader, NYUD_Loader, Custom_Loader, BipedDataset, TestDataset
+from edge_dataloader import BSDS_VOCLoader, BSDS_Loader, MDBD_Loader, NYUD_Loader, Custom_Loader, BipedDataset, TestDataset
 from torch.utils.data import DataLoader
 
 import torch
@@ -39,8 +39,14 @@ parser.add_argument('--only-bsds', action='store_true',
         help='only use bsds for training')
 parser.add_argument('--ablation', action='store_true',
         help='not use bsds val set for training')
-parser.add_argument('--dataset', type=str, default='BIPED',
+parser.add_argument('--test_data', type=str, default='MDBD',
+        help='test data')
+parser.add_argument('--train_data', type=str, default='BIPED',
         help='data settings for BSDS, Multicue and NYUD datasets')
+parser.add_argument('--train_list', type=str, default='train_pair.lst',
+        help='training data list')
+parser.add_argument('--test_list', type=str, default='test_pair.lst',
+        help='testing data list')
 
 parser.add_argument('--model', type=str, default='pidinet',
         help='model to train the dataset') # check later
@@ -173,9 +179,9 @@ def main(running_file):
         else:
             train_dataset = BSDS_VOCLoader(root=args.datadir, split="train", threshold=args.eta, ablation=args.ablation)
             test_dataset = BSDS_VOCLoader(root=args.datadir, split="test", threshold=args.eta)
-    elif 'Multicue' == args.dataset[0]:
-        train_dataset = Multicue_Loader(root=args.datadir, split="train", threshold=args.eta, setting=args.dataset[1:])
-        test_dataset = Multicue_Loader(root=args.datadir, split="test", threshold=args.eta, setting=args.dataset[1:])
+    elif 'MDBD' == args.dataset[0]:
+        train_dataset = MDBD_Loader(root=args.datadir, split="train", threshold=args.eta, setting=args.dataset[1:], arg=args)
+        test_dataset = MDBD_Loader(root=args.datadir, split="test", threshold=args.eta, setting=args.dataset[1:],arg=args)
     elif 'NYUD' == args.dataset[0]:
         train_dataset = NYUD_Loader(root=args.datadir, split="train", setting=args.dataset[1:])
         test_dataset = NYUD_Loader(root=args.datadir, split="test", setting=args.dataset[1:])
@@ -183,7 +189,7 @@ def main(running_file):
         train_dataset = BipedDataset(args.datadir, img_width=352, img_height=352,
                                      mean_bgr=[103.939,116.779,123.68], train_mode='train', arg=args)
         test_dataset = TestDataset(args.datadir, test_data='BIPED',img_width=1280, img_height=720,
-                                   mean_bgr=[103.939,116.779,123.68],test_list='test_rgb.lst', arg=args)
+                                   mean_bgr=[103.939,116.779,123.68], arg=args)
     elif 'Custom' == args.dataset[0]:
         train_dataset = Custom_Loader(root=args.datadir)
         test_dataset = Custom_Loader(root=args.datadir)
