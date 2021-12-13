@@ -87,16 +87,19 @@ class BSDS_VOCLoader(data.Dataset):
     Dataloader BSDS500
     """
 
-    def __init__(self, root='data/HED-BSDS_PASCAL', split='train', transform=False, threshold=0.3, ablation=False, arg=None):
+    def __init__(self, root='data/HED-BSDS_PASCAL', split='train',
+                 transform=False, threshold=0.3, ablation=False, arg=None,
+                 mean_bgr=[103.939, 116.779, 123.68]):
         self.root = root
         self.split = split
+        self.mean_bgr = mean_bgr
         self.threshold = threshold * 256
         print('Threshold for ground truth: %f on BSDS_VOC' % self.threshold)
-        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                         std=[0.229, 0.224, 0.225])
+        # normalize = transforms.Normalize(mean=[103.939, 116.779, 123.68])
+        # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+        #                                  std=[0.229, 0.224, 0.225])
         self.transform = transforms.Compose([
-            transforms.ToTensor(),
-            normalize])
+            transforms.ToTensor()])
         if self.split == 'train':
             print('error here train')
             if ablation:
@@ -140,13 +143,16 @@ class BSDS_VOCLoader(data.Dataset):
             lb[lb == 0] = 0
             lb[np.logical_and(lb > 0, lb < threshold)] = 2
             lb[lb >= threshold] = 1
-
         else:
             img_file = self.filelist[index].rstrip()
 
-        with open(os.path.join(self.root, img_file), 'rb') as f:
-            img = Image.open(f)
-            img = img.convert('RGB')
+        # with open(os.path.join(self.root, img_file), 'rb') as f:
+        #     img = Image.open(f)
+        #     # img = img.convert('RGB') # ORI
+        #     img = img.convert('RGB')
+        img =cv.imread(os.path.join(self.root, img_file))
+        img = np.array(img, dtype=np.float32)
+        img -=self.mean_bgr
         img = self.transform(img)
 
         if self.split == "train":
@@ -438,24 +444,24 @@ class BipedDataset(data.Dataset):
         #  400 for BIPEd and 352 for BSDS check with 384
         crop_size = self.img_height if self.img_height == self.img_width else 352  # MDBD=480 BPED=352
 
-        # # for BSDS
-        # if i_w> crop_size and i_h>crop_size:
-        #     i = random.randint(0, i_h - crop_size)
-        #     j = random.randint(0, i_w - crop_size)
-        #     img = img[i:i + crop_size , j:j + crop_size ]
-        #     gt = gt[i:i + crop_size , j:j + crop_size ]
+        # for BSDS
+        if i_w> crop_size and i_h>crop_size:
+            i = np.random.randint(0, i_h - crop_size)
+            j = np.random.randint(0, i_w - crop_size)
+            img = img[i:i + crop_size , j:j + crop_size ]
+            gt = gt[i:i + crop_size , j:j + crop_size ]
 
-        # for BIPED
-        if np.random.random() >= 0.5:  # l
-            h, w = gt.shape
-            LR_img_size = 256  # l BIPED=256, 240 200 # MDBD= 352
-            i = np.random.randint(0, h - LR_img_size)
-            j = np.random.randint(0, w - LR_img_size)
-            # if img.
-            img = img[i:i + LR_img_size, j:j + LR_img_size]
-            gt = gt[i:i + LR_img_size, j:j + LR_img_size]
-            img = cv.resize(img, dsize=(crop_size, crop_size), )
-            gt = cv.resize(gt, dsize=(crop_size, crop_size))
+        # # for BIPED
+        # if np.random.random() >= 0.5:  # l
+        #     h, w = gt.shape
+        #     LR_img_size = 256  # l BIPED=256, 240 200 # MDBD= 352
+        #     i = np.random.randint(0, h - LR_img_size)
+        #     j = np.random.randint(0, w - LR_img_size)
+        #     # if img.
+        #     img = img[i:i + LR_img_size, j:j + LR_img_size]
+        #     gt = gt[i:i + LR_img_size, j:j + LR_img_size]
+        #     img = cv.resize(img, dsize=(crop_size, crop_size), )
+        #     gt = cv.resize(gt, dsize=(crop_size, crop_size))
         else:
             # New addidings
             img = cv.resize(img, dsize=(crop_size, crop_size))
@@ -492,7 +498,7 @@ class TestDataset(data.Dataset):
                  arg=None
                  ):
 
-        self.data_root = data_root
+        self.data_root = os.path.join(data_root,arg.test_data[0])
         self.test_data = arg.test_data
         self.test_list = arg.test_list
         self.args = arg
@@ -520,43 +526,40 @@ class TestDataset(data.Dataset):
                 raise ValueError(
                     f"Test list not provided for dataset: {self.test_data}")
             # just for biped test dataset
-            list_name = os.path.join(self.data_root, 'BIPED', 'edges', self.test_list)
-            with open(list_name, 'r') as f:
-                files = f.readlines()
-            files = [line.strip() for line in files]
-            pairs = [line.split() for line in files]
-            images_path = [line[0] for line in pairs]
-            labels_path = [line[1] for line in pairs]
-            sample_indices = [images_path, labels_path]
+            list_name = os.path.join(self.data_root, 'edges', self.test_list)
+            with open(list_name) as f:
+                files = json.load(f)
+            for pair in files:
+                tmp_img = pair[0]
+                tmp_gt = pair[1]
+                sample_indices.append(
+                    (os.path.join(self.data_root, tmp_img),
+                     os.path.join(self.data_root, tmp_gt),))
         return sample_indices
 
     def __len__(self):
-        return len(self.data_index[0])
+        return len(self.data_index)
 
     def __getitem__(self, idx):
         # get data sample
         # image_path, label_path = self.data_index[idx]
-        image_path = self.data_index[0][idx]
-        label_path = None if self.test_data == "CLASSIC" else self.data_index[1][idx]
+        image_path = self.data_index[idx][0]
+        label_path = None if self.test_data[0] == "CLASSIC" else self.data_index[idx][1]
         img_name = os.path.basename(image_path)
         file_name = os.path.splitext(img_name)[0] + ".png"
 
-        # base dir
-        if self.test_data.upper() == 'BIPED':
-            img_dir = os.path.join(self.data_root, self.test_data, 'edges', 'imgs', 'test')
-            gt_dir = os.path.join(self.data_root,self.test_data, 'edges', 'edge_maps', 'test')
-        elif self.test_data.upper() == 'CLASSIC':
-            img_dir = self.data_root
-            gt_dir = None
-        else:
-            img_dir = self.data_root
-            gt_dir = self.data_root
+        # # base dir
+        # if self.test_data[0] == 'CLASSIC':
+        #     img_dir = self.data_root
+        #     gt_dir = None
+        # else:
+        #     img_dir = self.data_root
+        #     gt_dir = self.data_root
 
         # load data
-        image = cv.imread(os.path.join(img_dir, image_path), cv.IMREAD_COLOR)
-        if not self.test_data == "CLASSIC":
-            label = cv.imread(os.path.join(
-                gt_dir, label_path), cv.IMREAD_COLOR)
+        image = cv.imread(image_path, cv.IMREAD_COLOR)
+        if not self.test_data[0] == "CLASSIC":
+            label = cv.imread(label_path, cv.IMREAD_COLOR)
         else:
             label = None
 
@@ -568,7 +571,7 @@ class TestDataset(data.Dataset):
 
     def transform(self, img, gt):
         # gt[gt< 51] = 0 # test without gt discrimination
-        if self.test_data == "CLASSIC":
+        if self.test_data[0] == "CLASSIC":
             img_height = self.img_height
             img_width = self.img_width
             print(

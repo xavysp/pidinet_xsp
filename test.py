@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description='PyTorch Diff Convolutional Network
 
 parser.add_argument('--datadir', type=str, default=dataset_base_dir,
         help='dir to the dataset')
-parser.add_argument('--test_data', type=str, default='MDBD',
+parser.add_argument('--test_data', type=str, default='CID',
         help='test data')
 parser.add_argument('--train_data', type=str, default='BIPED',
         help='data settings for BSDS, Multicue and NYUD datasets')
@@ -121,10 +121,10 @@ def main():
     ### Load Data
     if args.test_data[0] in ['BSDS', 'CID','MDBD']:
         test_dataset = BSDS_VOCLoader(root=args.datadir, split="test", threshold=args.eta,arg=args)
-    elif 'Multicue' == args.dataset[0]:
-        test_dataset = MDBD_Loader(root=args.datadir, split="test", threshold=args.eta, setting=args.dataset[1:])
-    elif 'NYUD' == args.test_data[0]:
-        test_dataset = NYUD_Loader(root=args.datadir, split="test", setting=args.dataset[1:])
+    # elif 'Multicue' == args.dataset[0]:
+    #     test_dataset = MDBD_Loader(root=args.datadir, split="test", threshold=args.eta, setting=args.dataset[1:])
+    # elif 'NYUD' == args.test_data[0]:
+    #     test_dataset = NYUD_Loader(root=args.datadir, split="test", setting=args.dataset[1:])
     else:
         test_dataset = TestDataset(args.datadir, test_data='BIPED', img_width=1280, img_height=720,
                                    mean_bgr=[103.939, 116.779, 123.68], arg=args)
