@@ -177,7 +177,7 @@ def main(running_file):
         train_dataset = BipedDataset(
             args.datadir, img_width=352, img_height=352, mean_bgr=[103.939,116.779,123.68],
             train_mode='train', arg=args, train_data=args.train_data[0])
-        test_dataset = TestDataset(args.datadir, test_data=args.test_data,img_width=1280, img_height=720,
+        test_dataset = TestDataset(args.datadir, test_data=args.test_data,img_width=512, img_height=512,
                                    mean_bgr=[103.939,116.779,123.68], arg=args)
     elif 'BSDS' == args.dataset[0]:
         if args.only_bsds:
