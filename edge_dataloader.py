@@ -564,7 +564,7 @@ class TestDataset(data.Dataset):
         image_path = self.data_index[idx][0]
         label_path = None if self.test_data[0] == "CLASSIC" else self.data_index[idx][1]
         img_name = os.path.basename(image_path)
-        file_name = os.path.splitext(img_name)[0] + ".png"
+        file_name = os.path.splitext(img_name)[0] # + ".png" # ORI
 
         # # base dir
         # if self.test_data[0] == 'CLASSIC':
@@ -595,25 +595,26 @@ class TestDataset(data.Dataset):
             print(
                 f"actual size: {img.shape}, target size: {(img_height, img_width,)}")
             # img = cv2.resize(img, (self.img_width, self.img_height))
-            img = cv.resize(img, (img_width, img_height))
+            # img = cv.resize(img, (img_width, img_height))
             gt = None
 
         # Make images and labels at least 512 by 512
         elif img.shape[0] < 512 or img.shape[1] < 512:
-            img = cv.resize(img, (self.img_width, self.img_height))  # 512
-            gt = cv.resize(gt, (self.img_width, self.img_height))  # 512
+            pass
+            # img = cv.resize(img, (self.img_width, self.img_height))  # 512
+            # gt = cv.resize(gt, (self.img_width, self.img_height))  # 512
 
         # Make sure images and labels are divisible by 2^4=16
         elif img.shape[0] % 16 != 0 or img.shape[1] % 16 != 0:
             img_width = ((img.shape[1] // 16) + 1) * 16
             img_height = ((img.shape[0] // 16) + 1) * 16
-            img = cv.resize(img, (img_width, img_height))
-            gt = cv.resize(gt, (img_width, img_height))
+            # img = cv.resize(img, (img_width, img_height))
+            # gt = cv.resize(gt, (img_width, img_height))
         else:
             img_width = self.img_width
             img_height = self.img_height
-            img = cv.resize(img, (img_width, img_height))
-            gt = cv.resize(gt, (img_width, img_height))
+            # img = cv.resize(img, (img_width, img_height))
+            # gt = cv.resize(gt, (img_width, img_height))
 
         # if self.yita is not None:
         #     gt[gt >= self.yita] = 1
