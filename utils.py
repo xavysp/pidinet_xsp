@@ -69,7 +69,7 @@ def load_checkpoint(args, running_file=None):
     return state
 
 
-def save_checkpoint(state, epoch, root, saveID, keep_freq=10):
+def save_checkpoint(state, epoch, root, saveID, keep_freq=10, train_data='NONE'):
 
     filename = 'checkpoint_%03d.pth.tar' % epoch
     model_dir = os.path.join(root, 'save_models')

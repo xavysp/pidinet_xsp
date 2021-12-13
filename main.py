@@ -40,11 +40,11 @@ parser.add_argument('--only-bsds', action='store_true',
         help='only use bsds for training')
 parser.add_argument('--ablation', action='store_true',
         help='not use bsds val set for training')
-parser.add_argument('--test_data', type=str, default='MDBD',
+parser.add_argument('--test_data', type=str, default='BRIND',
         help='test data')
-parser.add_argument('--train_data', type=str, default='BIPED',
+parser.add_argument('--train_data', type=str, default='BRIND',
         help='data settings for BSDS, Multicue and NYUD datasets')
-parser.add_argument('--train_list', type=str, default='train_pair.lst',
+parser.add_argument('--train_list', type=str, default='train_pair1.lst',
         help='training data list')
 parser.add_argument('--test_list', type=str, default='test_pair.lst',
         help='testing data list')
@@ -174,8 +174,9 @@ def main(running_file):
 
     ### Load Data
     if args.train_data[0] in ['BIPED','BRIND','MDBD']:
-        train_dataset = BipedDataset(args.datadir, img_width=352, img_height=352,
-                                     mean_bgr=[103.939,116.779,123.68], train_mode='train', arg=args)
+        train_dataset = BipedDataset(
+            args.datadir, img_width=352, img_height=352, mean_bgr=[103.939,116.779,123.68],
+            train_mode='train', arg=args, train_data=args.train_data[0])
         test_dataset = TestDataset(args.datadir, test_data=args.test_data,img_width=1280, img_height=720,
                                    mean_bgr=[103.939,116.779,123.68], arg=args)
     elif 'BSDS' == args.dataset[0]:
@@ -238,7 +239,8 @@ def main(running_file):
 
         # adjust learning rate
         lr_str = adjust_learning_rate(optimizer, epoch, args)
-
+        # # test on each epoch
+        # test(test_loader, model, epoch + 1, running_file, args)
         # train
         tr_avg_loss = train(
             train_loader, model, optimizer, epoch, running_file, args, lr_str)
@@ -252,7 +254,8 @@ def main(running_file):
             'epoch': epoch,
             'state_dict': model.state_dict(),
             'optimizer': optimizer.state_dict(),
-            }, epoch, args.savedir, saveID, keep_freq=args.save_freq)
+            }, epoch, args.savedir, saveID, keep_freq=args.save_freq,
+        train_data=args.train_data[0])
 
         # test on each epoch
         test(test_loader, model, epoch+1, running_file, args)

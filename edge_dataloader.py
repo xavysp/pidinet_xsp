@@ -363,9 +363,9 @@ class BipedDataset(data.Dataset):
 
         data_root = os.path.abspath(self.data_root)
         sample_indices = []
-        data_root = os.path.join(data_root, 'edges')
-        if self.train_data.lower() == 'biped':
 
+        if self.train_data.lower() == 'biped':
+            data_root = os.path.join(data_root, 'edges')
             images_path = os.path.join(data_root,
                                        'imgs',
                                        self.train_mode,
@@ -386,24 +386,25 @@ class BipedDataset(data.Dataset):
                          os.path.join(labels_path, directory_name, file_name + '.png'),)
                     )
         else:
-            file_path = os.path.join(data_root, self.train_list)
-            if self.train_data.lower() == 'brind':
 
+            file_path = os.path.join(data_root, self.train_list)
+            if self.train_data in ['BRIND', 'MDND']:
+                with open(file_path) as f:
+                    files = json.load(f)
+                for pair in files:
+                    tmp_img = pair[0]
+                    tmp_gt = pair[1]
+                    sample_indices.append(
+                        (os.path.join(data_root, tmp_img),
+                         os.path.join(data_root, tmp_gt),))
+
+            else:
                 with open(file_path, 'r') as f:
                     files = f.readlines()
                 files = [line.strip() for line in files]
 
                 pairs = [line.split() for line in files]
                 for pair in pairs:
-                    tmp_img = pair[0]
-                    tmp_gt = pair[1]
-                    sample_indices.append(
-                        (os.path.join(data_root, tmp_img),
-                         os.path.join(data_root, tmp_gt),))
-            else:
-                with open(file_path) as f:
-                    files = json.load(f)
-                for pair in files:
                     tmp_img = pair[0]
                     tmp_gt = pair[1]
                     sample_indices.append(
