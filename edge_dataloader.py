@@ -342,7 +342,7 @@ class BipedDataset(data.Dataset):
                  crop_img=False,
                  train_data='BIPED', arg=None
                  ):
-        self.data_root = data_root
+        self.data_root = os.path.join(data_root,arg.train_data[0])
         self.train_mode = train_mode
         self.dataset_type = dataset_type
         self.data_type = 'aug'  # be aware that this might change in the future
@@ -352,7 +352,7 @@ class BipedDataset(data.Dataset):
         self.crop_img = crop_img
         self.arg = arg
         self.train_data = train_data
-        self.train_list = 'train_pair.txt'
+        self.train_list = arg.train_list
 
         self.data_index = self._build_index()
 
@@ -363,7 +363,7 @@ class BipedDataset(data.Dataset):
 
         data_root = os.path.abspath(self.data_root)
         sample_indices = []
-        data_root = os.path.join(data_root, self.train_data, 'edges')
+        data_root = os.path.join(data_root, 'edges')
         if self.train_data.lower() == 'biped':
 
             images_path = os.path.join(data_root,
@@ -387,7 +387,7 @@ class BipedDataset(data.Dataset):
                     )
         else:
             file_path = os.path.join(data_root, self.train_list)
-            if self.arg.train_data.lower() == 'brind':
+            if self.train_data.lower() == 'brind':
 
                 with open(file_path, 'r') as f:
                     files = f.readlines()
@@ -466,11 +466,11 @@ class BipedDataset(data.Dataset):
             # New addidings
             img = cv.resize(img, dsize=(crop_size, crop_size))
             gt = cv.resize(gt, dsize=(crop_size, crop_size))
-        # for  BIPED and BSDS
+        # for  BIPED and BRIND
         gt[gt > 0.2] += 0.5
         gt = np.clip(gt, 0., 1.)
         # for MDBD
-        # gt[gt > 0.1] =1.
+        # gt[gt > 0.1] +=0.3
         ## gt = np.clip(gt, 0., 1.)
         # # For RCF input
         # # -----------------------------------
@@ -498,8 +498,8 @@ class TestDataset(data.Dataset):
                  arg=None
                  ):
 
-        self.data_root = os.path.join(data_root,arg.test_data[0])
-        self.test_data = arg.test_data
+        self.data_root = os.path.join(data_root,test_data)
+        self.test_data = test_data
         self.test_list = arg.test_list
         self.args = arg
         # self.arg = arg
@@ -526,15 +526,32 @@ class TestDataset(data.Dataset):
                 raise ValueError(
                     f"Test list not provided for dataset: {self.test_data}")
             # just for biped test dataset
-            list_name = os.path.join(self.data_root, 'edges', self.test_list)
-            with open(list_name) as f:
-                files = json.load(f)
-            for pair in files:
-                tmp_img = pair[0]
-                tmp_gt = pair[1]
-                sample_indices.append(
-                    (os.path.join(self.data_root, tmp_img),
-                     os.path.join(self.data_root, tmp_gt),))
+            # if self.test_data=='BIPED':
+            #     list_name = os.path.join(self.data_root, 'edges', self.test_list)
+            # else:
+            list_name = os.path.join(self.data_root, self.test_list)
+            if self.test_data=='BIPED':
+
+                with open(list_name) as f:
+                    files = json.load(f)
+                for pair in files:
+                    tmp_img = pair[0]
+                    tmp_gt = pair[1]
+                    sample_indices.append(
+                        (os.path.join(self.data_root, tmp_img),
+                         os.path.join(self.data_root, tmp_gt),))
+            else:
+                with open(list_name, 'r') as f:
+                    files = f.readlines()
+                files = [line.strip() for line in files]
+
+                pairs = [line.split() for line in files]
+                for pair in pairs:
+                    tmp_img = pair[0]
+                    tmp_gt = pair[1]
+                    sample_indices.append(
+                        (os.path.join(self.data_root, tmp_img),
+                         os.path.join(self.data_root, tmp_gt),))
         return sample_indices
 
     def __len__(self):

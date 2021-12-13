@@ -26,6 +26,7 @@ import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
+import cv2 as cv
 
 IS_LINUX = True if platform.system()=="Linux" else False
 dataset_base_dir = '/opt/dataset'if IS_LINUX else 'C:/Users/xavysp/dataset'
@@ -84,7 +85,7 @@ parser.add_argument('--eta', type=float, default=0.3,
 parser.add_argument('--lmbda', type=float, default=1.1,
         help='weight on negative pixels (the beta parameter in the paper)')
 
-parser.add_argument('--resume', action='store_false',
+parser.add_argument('--resume', type=bool,default=False,
         help='use latest checkpoint if have any')
 parser.add_argument('--print-freq', type=int, default=10,
         help='print frequency')
@@ -114,11 +115,11 @@ def main(running_file):
     if args.lr_steps is not None and not isinstance(args.lr_steps, list):
         args.lr_steps = list(map(int, args.lr_steps.split('-')))
 
-    dataset_setting_choices = ['BSDS', 'NYUD-image', 'NYUD-hha', 'Multicue-boundary-1',
+    dataset_setting_choices = ['MDBD', 'NYUD-image', 'BRIND', 'Multicue-boundary-1',
                 'Multicue-boundary-2', 'Multicue-boundary-3', 'Multicue-edge-1', 'Multicue-edge-2', 'Multicue-edge-3','BIPED', 'Custom']
-    if not isinstance(args.dataset, list):
-        assert args.dataset in dataset_setting_choices, 'unrecognized data setting %s, please choose from %s' % (str(args.dataset), str(dataset_setting_choices))
-        args.dataset = list(args.dataset.strip().split('-'))
+    if not isinstance(args.train_data, list):
+        assert args.train_data in dataset_setting_choices, 'unrecognized data setting %s, please choose from %s' % (str(args.dataset), str(dataset_setting_choices))
+        args.train_data = list(args.train_data.strip().split('-'))
 
 
     print(args)
@@ -172,7 +173,12 @@ def main(running_file):
     #cudnn.benchmark = True
 
     ### Load Data
-    if 'BSDS' == args.dataset[0]:
+    if args.train_data[0] in ['BIPED','BRIND','MDBD']:
+        train_dataset = BipedDataset(args.datadir, img_width=352, img_height=352,
+                                     mean_bgr=[103.939,116.779,123.68], train_mode='train', arg=args)
+        test_dataset = TestDataset(args.datadir, test_data=args.test_data,img_width=1280, img_height=720,
+                                   mean_bgr=[103.939,116.779,123.68], arg=args)
+    elif 'BSDS' == args.dataset[0]:
         if args.only_bsds:
             train_dataset = BSDS_Loader(root=args.datadir, split="train", threshold=args.eta, ablation=args.ablation)
             test_dataset = BSDS_Loader(root=args.datadir, split="test", threshold=args.eta)
@@ -185,11 +191,6 @@ def main(running_file):
     elif 'NYUD' == args.dataset[0]:
         train_dataset = NYUD_Loader(root=args.datadir, split="train", setting=args.dataset[1:])
         test_dataset = NYUD_Loader(root=args.datadir, split="test", setting=args.dataset[1:])
-    elif 'BIPED' == args.dataset[0]:
-        train_dataset = BipedDataset(args.datadir, img_width=352, img_height=352,
-                                     mean_bgr=[103.939,116.779,123.68], train_mode='train', arg=args)
-        test_dataset = TestDataset(args.datadir, test_data='BIPED',img_width=1280, img_height=720,
-                                   mean_bgr=[103.939,116.779,123.68], arg=args)
     elif 'Custom' == args.dataset[0]:
         train_dataset = Custom_Loader(root=args.datadir)
         test_dataset = Custom_Loader(root=args.datadir)
@@ -411,11 +412,11 @@ def multiscale_test(test_loader, model, epoch, running_file, args):
 
         with torch.no_grad():
             for k in range(0, len(scale)):
-                im_ = cv2.resize(image_in, None, fx=scale[k], fy=scale[k], interpolation=cv2.INTER_LINEAR)
+                im_ = cv.resize(image_in, None, fx=scale[k], fy=scale[k], interpolation=cv.INTER_LINEAR)
                 im_ = im_.transpose((2,0,1))
                 results = model(torch.unsqueeze(torch.from_numpy(im_).cuda(), 0))
                 result = torch.squeeze(results[-1].detach()).cpu().numpy()
-                fuse = cv2.resize(result, (W, H), interpolation=cv2.INTER_LINEAR)
+                fuse = cv.resize(result, (W, H), interpolation=cv.INTER_LINEAR)
                 multi_fuse += fuse
             multi_fuse = multi_fuse / len(scale)
 
