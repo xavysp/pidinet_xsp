@@ -388,7 +388,7 @@ class BipedDataset(data.Dataset):
         else:
 
             file_path = os.path.join(data_root, self.train_list)
-            if self.train_data in ['BRIND', 'MDND']:
+            if self.train_data in ['BRIND', 'MDBD']:
                 with open(file_path) as f:
                     files = json.load(f)
                 for pair in files:
@@ -467,12 +467,17 @@ class BipedDataset(data.Dataset):
             # New addidings
             img = cv.resize(img, dsize=(crop_size, crop_size))
             gt = cv.resize(gt, dsize=(crop_size, crop_size))
-        # for  BIPED and BRIND
-        gt[gt > 0.2] += 0.5
-        gt = np.clip(gt, 0., 1.)
+        # # for  BIPED and BRIND
+        # gt[gt > 0.2] += 0.5
+        # gt = np.clip(gt, 0., 1.)
         # for MDBD
+        threshold = 0.3
+        # lb = lb[np.newaxis, :, :]
+        gt[gt == 0] = 0
+        gt[np.logical_and(gt > 0, gt < threshold)] = 2
+        gt[gt >= threshold] = 1
         # gt[gt > 0.1] +=0.3
-        ## gt = np.clip(gt, 0., 1.)
+        # gt = np.clip(gt, 0., 1.)
         # # For RCF input
         # # -----------------------------------
         # gt[gt==0]=0.

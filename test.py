@@ -36,9 +36,9 @@ parser = argparse.ArgumentParser(description='PyTorch Diff Convolutional Network
 
 parser.add_argument('--datadir', type=str, default=dataset_base_dir,
         help='dir to the dataset')
-parser.add_argument('--test_data', type=str, default='MDBD',
+parser.add_argument('--test_data', type=str, default='CID',
         help='test data')
-parser.add_argument('--train_data', type=str, default='BIPED',
+parser.add_argument('--train_data', type=str, default='BRIND',
         help='data settings for BSDS, Multicue and NYUD datasets')
 parser.add_argument('--train_list', type=str, default='train_pair.lst',
         help='training data list')
@@ -65,7 +65,7 @@ parser.add_argument('-j', '--workers', type=int, default=4,
         help='number of data loading workers')
 parser.add_argument('--eta', type=float, default=0.3, 
         help='threshold to determine the ground truth')
-parser.add_argument('--checkpoint', type=str, default='checkpoint_015.pth.tar',
+parser.add_argument('--checkpoint', type=str, default='checkpoint_019.pth.tar',
         help='checkpoint name')
 parser.add_argument('--evaluate-converted', type=bool, default=True,
         help='convert the checkpoint to vanilla cnn, then evaluate')
