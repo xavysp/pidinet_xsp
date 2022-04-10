@@ -467,17 +467,17 @@ class BipedDataset(data.Dataset):
             # New addidings
             img = cv.resize(img, dsize=(crop_size, crop_size))
             gt = cv.resize(gt, dsize=(crop_size, crop_size))
-        # # for  BIPED and BRIND
-        # gt[gt > 0.2] += 0.5
-        # gt = np.clip(gt, 0., 1.)
-        # for MDBD
-        threshold = 0.3
-        # lb = lb[np.newaxis, :, :]
-        gt[gt == 0] = 0
-        gt[np.logical_and(gt > 0, gt < threshold)] = 2
-        gt[gt >= threshold] = 1
-        # gt[gt > 0.1] +=0.3
-        # gt = np.clip(gt, 0., 1.)
+        # for  BIPED and BRIND
+        gt[gt > 0.2] += 0.5
+        gt = np.clip(gt, 0., 1.)
+        # # for MDBD
+        # threshold = 0.3
+        # # lb = lb[np.newaxis, :, :]
+        # gt[gt == 0] = 0
+        # gt[np.logical_and(gt > 0, gt < threshold)] = 2
+        # gt[gt >= threshold] = 1
+        # # gt[gt > 0.1] +=0.3
+        # # gt = np.clip(gt, 0., 1.)
         # # For RCF input
         # # -----------------------------------
         # gt[gt==0]=0.
@@ -555,7 +555,12 @@ class TestDataset(data.Dataset):
                 for pair in pairs:
                     tmp_img = pair[0]
                     tmp_gt = pair[1]
-                    sample_indices.append(
+                    if self.test_data=="CITYSCAPES":
+                        sample_indices.append(
+                            (self.data_root+tmp_img,
+                             self.data_root+tmp_gt,))
+                    else:
+                        sample_indices.append(
                         (os.path.join(self.data_root, tmp_img),
                          os.path.join(self.data_root, tmp_gt),))
         return sample_indices

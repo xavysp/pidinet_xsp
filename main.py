@@ -40,9 +40,9 @@ parser.add_argument('--only-bsds', action='store_true',
         help='only use bsds for training')
 parser.add_argument('--ablation', action='store_true',
         help='not use bsds val set for training')
-parser.add_argument('--test_data', type=str, default='MDBD',
+parser.add_argument('--test_data', type=str, default='CLASSIC',
         help='test data')
-parser.add_argument('--train_data', type=str, default='MDBD',
+parser.add_argument('--train_data', type=str, default='BIPED',
         help='data settings for BSDS, Multicue and NYUD datasets')
 parser.add_argument('--train_list', type=str, default='train_pair.lst',
         help='training data list')

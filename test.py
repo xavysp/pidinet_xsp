@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description='PyTorch Diff Convolutional Network
 
 parser.add_argument('--datadir', type=str, default=dataset_base_dir,
         help='dir to the dataset')
-parser.add_argument('--test_data', type=str, default='CID',
+parser.add_argument('--test_data', type=str, default='CLASSIC',
         help='test data')
 parser.add_argument('--train_data', type=str, default='BRIND',
         help='data settings for BSDS, Multicue and NYUD datasets')
@@ -92,8 +92,8 @@ def main():
     #             'Multicue-boundary-2', 'Multicue-boundary-3', 'Multicue-edge-1',
     #                            'Multicue-edge-2', 'Multicue-edge-3', 'BIPED']
     dataset_setting_choices = ['BSDS', 'NYUD', 'CID', 'BRIND',
-                'Multicue-boundary-2', 'Multicue-boundary-3', 'MDBD',
-                               'Multicue-edge-2', 'Multicue-edge-3', 'BIPED']
+                'Multicue-boundary-2', 'CITYSCAPES', 'MDBD',
+                               'Multicue-edge-2', 'CLASSIC', 'BIPED']
     if not isinstance(args.test_data, list):
         assert args.test_data in dataset_setting_choices, 'unrecognized data setting %s, please choose from %s' % (str(args.dataset), str(dataset_setting_choices))
         args.test_data = list(args.test_data.strip().split('-'))
