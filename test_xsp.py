@@ -27,7 +27,7 @@ from scipy import io as sio
 import models
 from utils import *
 from edge_dataloader import BSDS_VOCLoader, BSDS_Loader, MDBD_Loader, NYUD_Loader, TestDataset
-from models.convert_pidinet2 import convert_pidinet, convert_pidinet_test
+from models.convert_pidinet2 import convert_pidinet
 
 IS_LINUX = True if platform.system()=="Linux" else False
 dataset_base_dir = '/opt/dataset'if IS_LINUX else 'C:/Users/xavysp/dataset'
