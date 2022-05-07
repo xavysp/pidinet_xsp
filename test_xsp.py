@@ -27,7 +27,7 @@ from scipy import io as sio
 import models
 from utils import *
 from edge_dataloader import BSDS_VOCLoader, BSDS_Loader, MDBD_Loader, NYUD_Loader, TestDataset
-from models.convert_pidinet import convert_pidinet, convert_pidinet_test
+from models.convert_pidinet2 import convert_pidinet, convert_pidinet_test
 
 IS_LINUX = True if platform.system()=="Linux" else False
 dataset_base_dir = '/opt/dataset'if IS_LINUX else 'C:/Users/xavysp/dataset'
@@ -60,7 +60,7 @@ parser.add_argument('--seed', type=int, default=None,
 parser.add_argument('--gpu', type=str, default='', 
         help='gpus available')
 
-parser.add_argument('--epochs', type=int, default=150, 
+parser.add_argument('--epochs', type=int, default=21,
         help='number of total epochs to run')
 parser.add_argument('-j', '--workers', type=int, default=4, 
         help='number of data loading workers')
@@ -111,7 +111,7 @@ def main():
     checkpoint = torch.load(checkpoint_dir,
                                      map_location=device)
     if args.evaluate_converted:
-        model.load_state_dict(convert_pidinet_test(checkpoint['state_dict'], args.config))
+        model.load_state_dict(convert_pidinet(checkpoint['state_dict'], args.config))
     else:
         model.load_state_dict(checkpoint['state_dict'])
     ### Transfer to cuda devices

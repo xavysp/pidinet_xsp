@@ -521,10 +521,15 @@ class TestDataset(data.Dataset):
     def _build_index(self):
         sample_indices = []
         if self.test_data == "CLASSIC":
+            self.data_root=os.path.join("data","imgs")
             # for single image testing
             images_path = os.listdir(self.data_root)
             labels_path = None
-            sample_indices = [images_path, labels_path]
+            for pair in images_path:
+                sample_indices.append(
+                    (os.path.join(self.data_root, pair),
+                     None,))
+
         else:
             # image and label paths are located in a list file
 
@@ -572,7 +577,7 @@ class TestDataset(data.Dataset):
         # get data sample
         # image_path, label_path = self.data_index[idx]
         image_path = self.data_index[idx][0]
-        label_path = None if self.test_data[0] == "CLASSIC" else self.data_index[idx][1]
+        label_path = None if self.test_data == "CLASSIC" else self.data_index[idx][1]
         img_name = os.path.basename(image_path)
         file_name = os.path.splitext(img_name)[0] # + ".png" # ORI
 
@@ -585,12 +590,12 @@ class TestDataset(data.Dataset):
         #     gt_dir = self.data_root
 
         # load data
-        image = cv.imread(image_path, cv.IMREAD_COLOR)
-        if not self.test_data[0] == "CLASSIC":
+        if not self.test_data == "CLASSIC":
             label = cv.imread(label_path, cv.IMREAD_COLOR)
+            image = cv.imread(image_path, cv.IMREAD_COLOR)
         else:
             label = None
-
+            image = cv.imread(image_path, cv.IMREAD_COLOR)
         im_shape = [image.shape[0], image.shape[1]]
         image, label = self.transform(img=image, gt=label)
 
