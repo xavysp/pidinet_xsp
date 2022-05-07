@@ -129,7 +129,7 @@ def main():
     # elif 'NYUD' == args.test_data[0]:
     #     test_dataset = NYUD_Loader(root=args.datadir, split="test", setting=args.dataset[1:])
     elif args.test_data[0] =='CID':
-        test_dataset
+        test_dataset =None
 
     else:
         test_dataset = TestDataset(
