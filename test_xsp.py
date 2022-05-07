@@ -27,7 +27,7 @@ from scipy import io as sio
 import models
 from utils import *
 from edge_dataloader import BSDS_VOCLoader, BSDS_Loader, MDBD_Loader, NYUD_Loader, TestDataset
-from models.convert_pidinet2 import convert_pidinet
+from models.convert_pidinet import convert_pidinet, convert_pidinet_test
 
 IS_LINUX = True if platform.system()=="Linux" else False
 dataset_base_dir = '/opt/dataset'if IS_LINUX else 'C:/Users/xavysp/dataset'
@@ -111,7 +111,7 @@ def main():
     checkpoint = torch.load(checkpoint_dir,
                                      map_location=device)
     if args.evaluate_converted:
-        model.load_state_dict(convert_pidinet(checkpoint['state_dict'], args.config))
+        model.load_state_dict(convert_pidinet_test(checkpoint['state_dict'], args.config))
     else:
         model.load_state_dict(checkpoint['state_dict'])
     ### Transfer to cuda devices
@@ -122,12 +122,15 @@ def main():
         print('cuda is not used, the running might be slow')
 
     ### Load Data
-    if args.test_data[0] in ['BSDS', 'CID','MDBD']:
+    if args.test_data[0] in ['BSDS','MDBD']:
         test_dataset = BSDS_VOCLoader(root=args.datadir, split="test", threshold=args.eta,arg=args)
     # elif 'Multicue' == args.dataset[0]:
     #     test_dataset = MDBD_Loader(root=args.datadir, split="test", threshold=args.eta, setting=args.dataset[1:])
     # elif 'NYUD' == args.test_data[0]:
     #     test_dataset = NYUD_Loader(root=args.datadir, split="test", setting=args.dataset[1:])
+    elif args.test_data[0] =='CID':
+        test_dataset
+
     else:
         test_dataset = TestDataset(
             args.datadir, test_data=args.test_data[0], img_width=512, img_height=512,
@@ -141,41 +144,19 @@ def main():
 
 
 def test(test_loader, model, args, device=None):
-
     model.eval()
 
-    res_img_dir = os.path.join('results','test',args.model+args.train_data+'2'+args.test_data[0],'pred')
-    res_mat_dir = os.path.join('results','test',args.model+args.train_data+'2'+args.test_data[0],'mat')
-    os.makedirs(res_img_dir, exist_ok=True)
-    os.makedirs(res_mat_dir, exist_ok=True)
-    total_duration = []
+    end = time.perf_counter()
+    torch.cuda.synchronize()
     for idx, (image, img_name) in enumerate(test_loader):
 
         with torch.no_grad():
             image = image.cuda() if args.use_cuda else image
             _, _, H, W = image.shape
-            end = time.perf_counter()
-            if device.type == 'cuda':
-                torch.cuda.synchronize()
             results = model(image)
-            if device.type == 'cuda':
-                torch.cuda.synchronize()
-            tmp_duration = time.perf_counter() - end
-            total_duration.append(tmp_duration)
-            result = torch.squeeze(results[-1]).cpu().numpy()
-
-        results_all = torch.zeros((len(results), 1, H, W))
-        for i in range(len(results)):
-            results_all[i, 0, :, :] = results[i]
-
-        # torchvision.utils.save_image(1 - results_all,
-        #                              os.path.join(res_img_dir, "%s.jpg" % img_name))
-        sio.savemat(os.path.join(res_mat_dir, '%s.mat' % img_name), {'img': result})
-        result = Image.fromarray((255-(result * 255)).astype(np.uint8))
-        result.save(os.path.join(res_img_dir, "%s.png" % img_name))
-        print('saved in> ',os.path.join(res_img_dir, "%s.png" % img_name))
-    end = np.sum(np.array(total_duration))
-    print('FPS: %f' % (len(test_loader) / end))
+    torch.cuda.synchronize()
+    end = time.perf_counter() - end
+    print('fps: %f' % (len(test_loader) / end))
 
 
 if __name__ == '__main__':
