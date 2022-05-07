@@ -161,6 +161,83 @@ class BSDS_VOCLoader(data.Dataset):
             img_name = Path(img_file).stem
             return img, img_name
 
+class CID_Loader(data.Dataset):
+    """
+    Dataloader BSDS500
+    """
+
+    def __init__(self, root='data/HED-BSDS_PASCAL', split='train',
+                 transform=False, threshold=0.3, ablation=False, arg=None,
+                 mean_bgr=[103.939, 116.779, 123.68]):
+        self.root = root
+        self.split = split
+        self.mean_bgr = mean_bgr
+        self.threshold = threshold * 256
+        print('Threshold for ground truth: %f on BSDS_VOC' % self.threshold)
+        # normalize = transforms.Normalize(mean=[103.939, 116.779, 123.68])
+        # normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+        #                                  std=[0.229, 0.224, 0.225])
+        self.transform = transforms.Compose([
+            transforms.ToTensor()])
+        if self.split == 'train':
+            print('error here train')
+
+        elif self.split == 'test':
+            self.root = os.path.join(self.root,arg.test_data[0])
+            if ablation:
+                print('error here train')
+                self.filelist = os.path.join(self.root, 'val.lst')
+            else:
+                filelist = os.path.join(self.root, arg.test_list)
+        else:
+            raise ValueError("Invalid split type!")
+
+        self.filelist =[]
+        with open(filelist, 'r') as f:
+            files = f.readlines()
+        files = [line.strip() for line in files]
+        pairs = [line.split() for line in files]
+        for pair in pairs:
+            tmp_img = pair[0]
+            self.filelist.append(
+                (os.path.join(self.root, tmp_img)))
+        print(" ***** Dataset read***** ")
+
+    def __len__(self):
+        return len(self.filelist)
+
+    def __getitem__(self, index):
+        if self.split == "train":
+            img_file, lb_file = self.filelist[index].split()
+            img_file = img_file.strip()
+            lb_file = lb_file.strip()
+            lb = np.array(Image.open(os.path.join(self.root, lb_file)), dtype=np.float32)
+            if lb.ndim == 3:
+                lb = np.squeeze(lb[:, :, 0])
+            assert lb.ndim == 2
+            threshold = self.threshold
+            lb = lb[np.newaxis, :, :]
+            lb[lb == 0] = 0
+            lb[np.logical_and(lb > 0, lb < threshold)] = 2
+            lb[lb >= threshold] = 1
+        else:
+            img_file = self.filelist[index].rstrip()
+
+        # with open(os.path.join(self.root, img_file), 'rb') as f:
+        #     img = Image.open(f)
+        #     # img = img.convert('RGB') # ORI
+        #     img = img.convert('RGB')
+        img =cv.imread(os.path.join(self.root, img_file))
+        img = np.array(img, dtype=np.float32)
+        img -=self.mean_bgr
+        img = self.transform(img)
+
+        if self.split == "train":
+            return img, lb
+        else:
+            img_name = Path(img_file).stem
+            return img, img_name
+
 
 class MDBD_Loader(data.Dataset):
     """

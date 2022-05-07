@@ -26,7 +26,7 @@ from scipy import io as sio
 
 import models
 from utils import *
-from edge_dataloader import BSDS_VOCLoader, BSDS_Loader, MDBD_Loader, NYUD_Loader, TestDataset
+from edge_dataloader import BSDS_VOCLoader, CID_Loader,BSDS_Loader, MDBD_Loader, NYUD_Loader, TestDataset
 from models.convert_pidinet import convert_pidinet, convert_pidinet_test
 
 IS_LINUX = True if platform.system()=="Linux" else False
@@ -129,7 +129,8 @@ def main():
     # elif 'NYUD' == args.test_data[0]:
     #     test_dataset = NYUD_Loader(root=args.datadir, split="test", setting=args.dataset[1:])
     elif args.test_data[0] =='CID':
-        test_dataset =None
+        test_dataset = CID_Loader(root=args.datadir, split="test", threshold=args.eta, arg=args)
+
 
     else:
         test_dataset = TestDataset(
