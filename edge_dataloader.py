@@ -153,6 +153,8 @@ class BSDS_VOCLoader(data.Dataset):
         img =cv.imread(os.path.join(self.root, img_file))
         img = np.array(img, dtype=np.float32)
         img -=self.mean_bgr
+        # # FOR FPS    CROP IMAGE
+        # img = img[:200, :200]
         img = self.transform(img)
 
         if self.split == "train":
@@ -230,12 +232,15 @@ class CID_Loader(data.Dataset):
         img =cv.imread(os.path.join(self.root, img_file))
         img = np.array(img, dtype=np.float32)
         img -=self.mean_bgr
+        # # FOR FPS    CROP IMAGE
+        # img=img[:200,:200]
         img = self.transform(img)
 
         if self.split == "train":
             return img, lb
         else:
             img_name = Path(img_file).stem
+
             return img, img_name
 
 

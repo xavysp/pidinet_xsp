@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description='PyTorch Diff Convolutional Network
 
 parser.add_argument('--datadir', type=str, default=dataset_base_dir,
         help='dir to the dataset')
-parser.add_argument('--test_data', type=str, default='CID',
+parser.add_argument('--test_data', type=str, default='BSDS',
         help='test data')
 parser.add_argument('--train_data', type=str, default='BIPED',
         help='data settings for BSDS, Multicue and NYUD datasets')
@@ -130,7 +130,6 @@ def main():
     #     test_dataset = NYUD_Loader(root=args.datadir, split="test", setting=args.dataset[1:])
     elif args.test_data[0] =='CID':
         test_dataset = CID_Loader(root=args.datadir, split="test", threshold=args.eta, arg=args)
-
 
     else:
         test_dataset = TestDataset(
