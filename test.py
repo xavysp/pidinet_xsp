@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description='PyTorch Diff Convolutional Network
 
 parser.add_argument('--datadir', type=str, default=dataset_base_dir,
         help='dir to the dataset')
-parser.add_argument('--test_data', type=str, default='CID',
+parser.add_argument('--test_data', type=str, default='BIPED',
         help='test data')
 parser.add_argument('--train_data', type=str, default='BIPED',
         help='data settings for BSDS, Multicue and NYUD datasets')
@@ -46,7 +46,7 @@ parser.add_argument('--test_list', type=str, default='test_pair.lst',
         help='testing data list')
 
 
-parser.add_argument('--model', type=str, default='pidinet',
+parser.add_argument('--model', type=str, default='pidinet_tiny',
         help='model to train the dataset') # pidinet
 parser.add_argument('--sa', action='store_true', 
         help='use attention in diffnet')
@@ -66,7 +66,7 @@ parser.add_argument('-j', '--workers', type=int, default=4,
         help='number of data loading workers')
 parser.add_argument('--eta', type=float, default=0.3, 
         help='threshold to determine the ground truth')
-parser.add_argument('--checkpoint', type=str, default='checkpoint_019.pth.tar',
+parser.add_argument('--checkpoint', type=str, default='checkpoint_018.pth.tar',
         help='checkpoint name')
 parser.add_argument('--evaluate-converted', type=bool, default=True,
         help='convert the checkpoint to vanilla cnn, then evaluate')
@@ -75,6 +75,13 @@ args = parser.parse_args()
 
 if torch.cuda.is_available():
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu
+
+def count_parameters(model=None):
+    if model is not None:
+        return sum(p.numel() for p in model.parameters() if p.requires_grad)
+    else:
+        print("Error counting model parameters line 32 img_processing.py")
+        raise NotImplementedError
 
 def main():
 
@@ -94,7 +101,7 @@ def main():
     #                            'Multicue-edge-2', 'Multicue-edge-3', 'BIPED']
     dataset_setting_choices = ['BSDS', 'NYUD', 'CID', 'BRIND',
                 'Multicue-boundary-2', 'CITYSCAPES', 'MDBD',
-                               'Multicue-edge-2', 'CLASSIC', 'BIPED']
+                               'Multicue-edge-2', 'CLASSIC', 'BIPED','UDED']
     if not isinstance(args.test_data, list):
         assert args.test_data in dataset_setting_choices, 'unrecognized data setting %s, please choose from %s' % (str(args.dataset), str(dataset_setting_choices))
         args.test_data = list(args.test_data.strip().split('-'))
@@ -137,6 +144,8 @@ def main():
         test_dataset, batch_size=1, num_workers=args.workers, shuffle=False)
 
     test(test_loader, model, args, device=device)
+    num_param = count_parameters(model)
+    print("# parameters: ", num_param)
     return
 
 

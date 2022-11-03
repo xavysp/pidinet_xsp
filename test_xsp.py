@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(description='PyTorch Diff Convolutional Network
 
 parser.add_argument('--datadir', type=str, default=dataset_base_dir,
         help='dir to the dataset')
-parser.add_argument('--test_data', type=str, default='BSDS',
+parser.add_argument('--test_data', type=str, default='UDED',
         help='test data')
 parser.add_argument('--train_data', type=str, default='BIPED',
         help='data settings for BSDS, Multicue and NYUD datasets')
@@ -66,7 +66,7 @@ parser.add_argument('-j', '--workers', type=int, default=4,
         help='number of data loading workers')
 parser.add_argument('--eta', type=float, default=0.3, 
         help='threshold to determine the ground truth')
-parser.add_argument('--checkpoint', type=str, default='checkpoint_019.pth.tar',
+parser.add_argument('--checkpoint', type=str, default='checkpoint_018.pth.tar',
         help='checkpoint name')
 parser.add_argument('--evaluate-converted', type=bool, default=True,
         help='convert the checkpoint to vanilla cnn, then evaluate')
@@ -147,14 +147,16 @@ def test(test_loader, model, args, device=None):
     model.eval()
 
     end = time.perf_counter()
-    torch.cuda.synchronize()
+    if device.type == 'cuda':
+        torch.cuda.synchronize()
     for idx, (image, img_name) in enumerate(test_loader):
 
         with torch.no_grad():
             image = image.cuda() if args.use_cuda else image
             _, _, H, W = image.shape
             results = model(image)
-    torch.cuda.synchronize()
+    if device.type == 'cuda':
+        torch.cuda.synchronize()
     end = time.perf_counter() - end
     print('fps: %f' % (len(test_loader) / end))
 

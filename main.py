@@ -49,7 +49,7 @@ parser.add_argument('--train_list', type=str, default='train_pair.lst',
 parser.add_argument('--test_list', type=str, default='test_pair.lst',
         help='testing data list')
 
-parser.add_argument('--model', type=str, default='pidinet',
+parser.add_argument('--model', type=str, default='pidinet-tiny-L',
         help='model to train the dataset') # check later
 parser.add_argument('--sa', action='store_true',
         help='use CSAM in pidinet')

@@ -623,7 +623,7 @@ class TestDataset(data.Dataset):
             #     list_name = os.path.join(self.data_root, 'edges', self.test_list)
             # else:
             list_name = os.path.join(self.data_root, self.test_list)
-            if self.test_data=='BIPED':
+            if self.test_data in ['BIPED','UDED']:
 
                 with open(list_name) as f:
                     files = json.load(f)
