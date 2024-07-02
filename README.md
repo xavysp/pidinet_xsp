@@ -17,6 +17,20 @@ The writing style of this code is based on [Dynamic Group Convolution](https://g
 
 If you find something useful from our work, please consider citing [our paper](pdc.bib). 
 
+```
+@ARTICLE{pdc-PAMI2023,
+  author={Su, Zhuo and Zhang, Jiehua and Wang, Longguang and Zhang, Hua and Liu, Zhen and Pietikäinen, Matti and Liu, Li},
+  journal={IEEE Transactions on Pattern Analysis and Machine Intelligence}, 
+  title={Lightweight Pixel Difference Networks for Efficient Visual Representation Learning}, 
+  year={2023},
+  volume={45},
+  number={12},
+  pages={14956-14974},
+  keywords={Image edge detection;Feature extraction;Computational modeling;Biological system modeling;Task analysis;Quantization (signal);Object recognition;Binary neural networks;convolutional neural networks;edge detection;efficient representation learning;facial recognition;image classification},
+  doi={10.1109/TPAMI.2023.3300513}
+}
+```
+
 :rocket: **Updates**:
 - `Dec. 29, 2021`: Add functions with vanilla conv components in [models/ops\_theta.py](models/ops_theta.py)
 - `Aug. 18, 2021`: Load checkpoints in [trained\_models](trained_models)
